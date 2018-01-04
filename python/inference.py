@@ -1,3 +1,4 @@
+# Inference of CaffeNet using pycaffe interface.
 # -*- coding:utf-8 -*-
 import numpy as np
 import sys,os
