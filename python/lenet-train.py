@@ -1,3 +1,4 @@
+# Train LeNet using pycaffe interface.
 import caffe
 
 caffe.set_device(0)
