@@ -1,0 +1,48 @@
+#include <iostream>
+#include <caffe/syncedmem.hpp>
+#include <caffe/util/math_functions.hpp>
+using namespace std;
+
+
+int main(){
+	// 创建一个SyncedMemory实例，其容量为10
+	caffe::SyncedMemory mem(10);
+	// 此时mem的状态为UNINITIALIZED，既不属于CPU也不属于GPU
+	cout<<mem.head()<<endl;
+	// 该函数调用了to_cpu()，将mem的状态修改为HEAD_AT_CPU
+	mem.cpu_data();
+	cout<<mem.head()<<endl;
+	// 该函数调用了to_gpu()，将mem的状态有了GPU的属性，又由于其之前已经
+	// 属于CPU，故此时起状态为SYNCED
+	mem.gpu_data();
+	cout<<mem.head()<<endl;
+	// 可以通过math_functions中定义的函数修改和控制CPU/GPU上的数据
+	void* cpu_data = mem.mutable_cpu_data();
+	if (mem.head() != caffe::SyncedMemory::HEAD_AT_CPU) {
+		fprintf(stderr, "Error\n");
+		return -1;
+	}
+	caffe::caffe_memset(mem.size(), 1, cpu_data);
+	for (int i = 0; i < mem.size(); ++i) {
+		if ((static_cast<char*>(cpu_data))[i] != 1) {
+			fprintf(stderr, "Error\n");
+			return -1;
+		}
+	}
+
+	cpu_data = mem.mutable_cpu_data();
+	if (mem.head() != caffe::SyncedMemory::HEAD_AT_CPU) {
+		fprintf(stderr, "Error\n");
+		return -1;
+	}
+
+	caffe::caffe_memset(mem.size(), 2, cpu_data);
+	for (int i = 0; i < mem.size(); ++i) {
+		if ((static_cast<char*>(cpu_data))[i] != 2) {
+			fprintf(stderr, "Error\n");
+			return -1;
+		}
+	}
+	cout << "test finished!" << endl;
+	return 0;
+}
