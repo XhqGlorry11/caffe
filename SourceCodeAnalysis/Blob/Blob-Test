@@ -1,0 +1,52 @@
+#include <iostream>
+#include "caffe/blob.hpp"
+#include "caffe/syncedmem.hpp"
+using namespace std;
+using namespace caffe;
+
+// 编译时需添加-lglog -lboost_system链接库
+
+int main(){
+	// 定义一个Blob，此时未向其中添加任何数据，其容量为0
+	Blob<float> a;
+	cout << "Size: " << a.shape_string() << endl;
+	// 修改a的容量，维度信息分别改为1,2,3,4
+	a.Reshape(1,2,3,4);
+	cout << "Size: " << a.shape_string() << endl;
+	cout<<"-----------------------------------------"<<endl;
+	// 通过Blob的mutable_cpu_data借口修改Blob的数据，网络的前向传播即通过
+	// 这种方法修改输出data-Blob的数据
+	float *ptr = a.mutable_cpu_data();
+	for(int i=0;i < a.count();i++){
+		ptr[i] = i;
+	}
+	for(int p=0;p<a.num();p++){
+		for(int q=0;q<a.channels();q++){
+			for(int m=0;m<a.height();m++){
+				for(int n=0;n<a.width();n++){
+					cout<<"a["<<p<<"]["<<q<<"]["<<m<<"]["<<n<<"]="<<a.data_at(p,q,m,n)<<endl;
+				}
+			}
+		}
+	}
+	// 通过Blob的mutable_cpu_diff借口修改Blob的数据，网络的反向传播即通过
+	// 这种方法修改输入diff-Blob的数据
+	float *ptr_diff = a.mutable_cpu_diff();
+	for(int i=0;i < a.count();i++){
+		ptr_diff[i] = i;
+	}
+	// 执行Blob的更新，即data = data-diff，完成层内权重值的更新
+	a.Update();
+	cout<<"-----------------------------------------"<<endl;
+	for(int p=0;p<a.num();p++){
+		for(int q=0;q<a.channels();q++){
+			for(int m=0;m<a.height();m++){
+				for(int n=0;n<a.width();n++){
+					cout<<"a["<<p<<"]["<<q<<"]["<<m<<"]["<<n<<"]="<<a.data_at(p,q,m,n)<<endl;
+				}
+			}
+		}
+	}
+	cout << "test finished!" << endl;
+	return 0;
+}
